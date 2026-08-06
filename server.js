@@ -12,7 +12,18 @@ const pool = new Pool({
   database: process.env.DB_NAME,
   password: process.env.DB_PASSWORD,
   port: parseInt(process.env.DB_PORT || '5432', 10),
-  connectionTimeoutMillis: 5000 // Aborta la petición a los 5 segundos si hay bloqueo, pero mantiene la API encendida
+  connectionTimeoutMillis: 5000, // Aborta la petición a los 5 segundos si hay bloqueo
+  // CONFIGURACIÓN CRÍTICA: Render requiere SSL para conexiones externas a bases de datos
+  ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false
+});
+
+// NUEVO: Ruta raíz para solucionar el "Cannot GET /"
+app.get('/', (req, res) => {
+  res.json({
+    status: 'Online',
+    message: 'Bienvenido a la API de Holdinvest B2B',
+    documentation: 'Usa /api/status para revisar el estado o /api/empresas/buscar para consultas'
+  });
 });
 
 // 1. Ruta de Estado de la API
@@ -56,12 +67,11 @@ app.get('/api/empresas/buscar', async (req, res) => {
   }
 });
 
-// 3. NUEVO ENDPOINT: Registrar Nueva Empresa B2B (POST)
+// 3. Registrar Nueva Empresa B2B (POST)
 app.post('/api/empresas/registrar', async (req, res) => {
   try {
     const { razon_social, identificador_fiscal, tipo_empresa, tamano_empresa, id_ciudad, direccion_especifica } = req.body;
 
-    // Validación básica de campos obligatorios antes de golpear la base de datos
     if (!razon_social || !identificador_fiscal || !tipo_empresa || !tamano_empresa || !id_ciudad) {
       return res.status(400).json({ error: 'Faltan campos obligatorios para procesar el registro comercial.' });
     }
@@ -80,7 +90,6 @@ app.post('/api/empresas/registrar', async (req, res) => {
   } catch (error) {
     console.error('Error al insertar registro comercial:', error.message);
     
-    // Captura específica si intentan registrar un RIF/NIT que ya existe
     if (error.code === '23505') {
       return res.status(400).json({ error: 'El identificador fiscal (RIF/NIT) ya está registrado en el ecosistema.' });
     }
