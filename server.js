@@ -1,98 +1,57 @@
-{\rtf1\ansi\ansicpg1252\cocoartf2639
-\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
-{\colortbl;\red255\green255\blue255;}
-{\*\expandedcolortbl;;}
-\margl1440\margr1440\vieww11520\viewh8400\viewkind0
-\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+const express = require('express');
+const { Pool } = require('pg');
+require('dotenv').config();
 
-\f0\fs24 \cf0 const express = require('express');\
-const \{ Pool \} = require('pg');\
-require('dotenv').config();\
-\
-const app = express();\
-app.use(express.json());\
-\
-// Configuraci\'f3n de la conexi\'f3n a PostgreSQL basada en tu .env de cPanel\
-const pool = new Pool(\{\
-  user: process.env.DB_USER,\
-  host: process.env.DB_HOST,\
-  database: process.env.DB_NAME,\
-  password: process.env.DB_PASSWORD,\
-  port: process.env.DB_PORT || 5432,\
-\});\
-\
-// Ruta Base de Verificaci\'f3n\
-app.get('/api/status', (req, res) => \{\
-  res.json(\{ status: 'Online', project: 'Holdinvest B2B Staging' \});\
-\});\
-\
-// ENDPOINT DE B\'daSQUEDA AVANZADA B2B\
-// Permite filtrar din\'e1micamente por tama\'f1o, regi\'f3n, estado, ciudad o rol corporativo\
-app.get('/api/empresas/buscar', async (req, res) => \{\
-  try \{\
-    const \{ tamano, region, estado, ciudad, tipo \} = req.query;\
-    \
-    let queryText = `\
-      SELECT \
-        e.id_empresa,\
-        e.razon_social,\
-        e.identificador_fiscal,\
-        e.tipo_empresa,\
-        e.tamano_empresa,\
-        c.nombre_ciudad,\
-        est.nombre_estado,\
-        r.nombre_region,\
-        COALESCE(g.nombre_gremio, 'NO AFILIADO') AS gremio_afiliado\
-      FROM Empresas e\
-      JOIN Ciudades c ON e.id_ciudad = c.id_ciudad\
-      JOIN Estados est ON c.id_estado = est.id_estado\
-      JOIN Regiones r ON est.id_region = r.id_region\
-      LEFT JOIN Afiliaciones_Gremios a ON e.id_empresa = a.id_empresa\
-      LEFT JOIN Camaras_Gremios g ON a.id_gremio = g.id_gremio\
-      WHERE 1=1\
-    `;\
-    \
-    const queryParams = [];\
-    let paramCounter = 1;\
-\
-    // Filtros din\'e1micos basados en los par\'e1metros URL recibidos\
-    if (tamano) \{\
-      queryText += ` AND e.tamano_empresa = $$\{paramCounter\}`;\
-      queryParams.push(tamano);\
-      paramCounter++;\
-    \}\
-    if (tipo) \{\
-      queryText += ` AND e.tipo_empresa = $$\{paramCounter\}`;\
-      queryParams.push(tipo);\
-      paramCounter++;\
-    \}\
-    if (region) \{\
-      queryText += ` AND r.nombre_region ILIKE $$\{paramCounter\}`;\
-      queryParams.push(`%$\{region\}%`);\
-      paramCounter++;\
-    \}\
-    if (estado) \{\
-      queryText += ` AND est.nombre_estado ILIKE $$\{paramCounter\}`;\
-      queryParams.push(`%$\{estado\}%`);\
-      paramCounter++;\
-    \}\
-    if (ciudad) \{\
-      queryText += ` AND c.nombre_ciudad ILIKE $$\{paramCounter\}`;\
-      queryParams.push(`%$\{ciudad\}%`);\
-      paramCounter++;\
-    \}\
-\
-    const \{ rows \} = await pool.query(queryText, queryParams);\
-    res.json(\{ total_resultados: rows.length, datos: rows \});\
-\
-  \} catch (error) \{\
-    console.error('Error en b\'fasqueda B2B:', error);\
-    res.status(500).json(\{ error: 'Error interno del servidor de desarrollo' \});\
-  \}\
-\});\
-\
-const PORT = process.env.PORT || 3000;\
-app.listen(PORT, () => \{\
-  console.log(`Servidor B2B Holdinvest corriendo en puerto $\{PORT\}`);\
-\});\
-}
+const app = express();
+app.use(express.json());
+
+// Configuración de la conexión a PostgreSQL
+const pool = new Pool({
+  user: process.env.DB_USER,
+  host: process.env.DB_HOST,
+  database: process.env.DB_NAME,
+  password: process.env.DB_PASSWORD,
+  port: parseInt(process.env.DB_PORT || '5432', 10),
+  connectionTimeoutMillis: 5000 // Si no conecta en 5 segundos, aborta la petición pero NO apaga el servidor
+});
+
+// Ruta Base de Verificación (Siempre funcionará)
+app.get('/api/status', (req, res) => {
+  res.json({ status: 'Online', project: 'Holdinvest B2B Staging' });
+});
+
+// ENDPOINT DE BÚSQUEDA AVANZADA B2B
+app.get('/api/empresas/buscar', async (req, res) => {
+  try {
+    let queryText = `
+      SELECT 
+        e.id_empresa, e.razon_social, e.identificador_fiscal, e.tipo_empresa, e.tamano_empresa,
+        c.nombre_ciudad, est.nombre_estado, r.nombre_region,
+        COALESCE(g.nombre_gremio, 'NO AFILIADO') AS gremio_afiliado
+      FROM Empresas e
+      JOIN Ciudades c ON e.id_ciudad = c.id_ciudad
+      JOIN Estados est ON c.id_estado = est.id_estado
+      JOIN Regiones r ON est.id_region = r.id_region
+      LEFT JOIN Afiliaciones_Gremios a ON e.id_empresa = a.id_empresa
+      LEFT JOIN Camaras_Gremios g ON a.id_gremio = g.id_gremio
+      WHERE 1=1
+    `;
+    
+    const { rows } = await pool.query(queryText);
+    res.json({ total_resultados: rows.length, datos: rows });
+
+  } catch (error) {
+    console.error('Error de conexión en base de datos B2B:', error.message);
+    res.status(500).json({ 
+      error: 'Error de conexión con la base de datos de cPanel.',
+      detalle: 'Asegúrate de que el puerto 5432 esté abierto de forma remota en tu hosting.',
+      codigo_error: error.code
+    });
+  }
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Servidor B2B Holdinvest corriendo exitosamente en puerto ${PORT}`);
+});
+
