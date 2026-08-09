@@ -104,3 +104,4 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Servidor B2B Holdinvest corriendo exitosamente en puerto ${PORT}`);
 });
+// Reinicio forzado piloto
