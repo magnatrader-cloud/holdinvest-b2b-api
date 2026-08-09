@@ -5,7 +5,7 @@ require('dotenv').config();
 const app = express();
 app.use(express.json());
 
-// Configuración de la conexión a PostgreSQL con cPanel
+// Configuración de la conexión a PostgreSQL con cPanel / Neon
 const pool = new Pool({
   user: process.env.DB_USER,
   host: process.env.DB_HOST,
@@ -13,11 +13,11 @@ const pool = new Pool({
   password: process.env.DB_PASSWORD,
   port: parseInt(process.env.DB_PORT || '5432', 10),
   connectionTimeoutMillis: 5000, // Aborta la petición a los 5 segundos si hay bloqueo
-  // CONFIGURACIÓN CRÍTICA: Render requiere SSL para conexiones externas a bases de datos
+  // CONFIGURACIÓN CRÍTICA: Forzamos compatibilidad de SSL con Neon y cPanel remotos
   ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false
 });
 
-// NUEVO: Ruta raíz para solucionar el "Cannot GET /"
+// Ruta raíz
 app.get('/', (req, res) => {
   res.json({
     status: 'Online',
@@ -31,22 +31,23 @@ app.get('/api/status', (req, res) => {
   res.json({ status: 'Online', project: 'Holdinvest B2B Staging' });
 });
 
-// 2. Endpoint de Búsqueda Avanzada B2B (GET)
+// 2. Endpoint de Búsqueda Avanzada B2B (GET) - CORREGIDO A MINÚSCULAS
 app.get('/api/empresas/buscar', async (req, res) => {
   try {
     const { tamano, region, estado, tipo } = req.query;
     
+    // Se pasaron a minúsculas todos los nombres de tablas y campos para PostgreSQL estándar
     let queryText = `
       SELECT 
         e.id_empresa, e.razon_social, e.identificador_fiscal, e.tipo_empresa, e.tamano_empresa,
         c.nombre_ciudad, est.nombre_estado, r.nombre_region,
         COALESCE(g.nombre_gremio, 'NO AFILIADO') AS gremio_afiliado
-      FROM Empresas e
-      JOIN Ciudades c ON e.id_ciudad = c.id_ciudad
-      JOIN Estados est ON c.id_estado = est.id_estado
-      JOIN Regiones r ON est.id_region = r.id_region
-      LEFT JOIN Afiliaciones_Gremios a ON e.id_empresa = a.id_empresa
-      LEFT JOIN Camaras_Gremios g ON a.id_gremio = g.id_gremio
+      FROM empresas e
+      JOIN ciudades c ON e.id_ciudad = c.id_ciudad
+      JOIN estados est ON c.id_estado = est.id_estado
+      JOIN regiones r ON est.id_region = r.id_region
+      LEFT JOIN afiliaciones_gremios a ON e.id_empresa = a.id_empresa
+      LEFT JOIN camaras_gremios g ON a.id_gremio = g.id_gremio
       WHERE 1=1
     `;
     
@@ -63,11 +64,11 @@ app.get('/api/empresas/buscar', async (req, res) => {
 
   } catch (error) {
     console.error('Error de consulta B2B:', error.message);
-    res.status(500).json({ error: 'Error de conexión con la base de datos de cPanel.', detalle: error.message });
+    res.status(500).json({ error: 'Error de conexión con la base de datos.', detalle: error.message });
   }
 });
 
-// 3. Registrar Nueva Empresa B2B (POST)
+// 3. Registrar Nueva Empresa B2B (POST) - CORREGIDO A MINÚSCULAS
 app.post('/api/empresas/registrar', async (req, res) => {
   try {
     const { razon_social, identificador_fiscal, tipo_empresa, tamano_empresa, id_ciudad, direccion_especifica } = req.body;
@@ -76,8 +77,9 @@ app.post('/api/empresas/registrar', async (req, res) => {
       return res.status(400).json({ error: 'Faltan campos obligatorios para procesar el registro comercial.' });
     }
 
+    // Se cambió el nombre de la tabla "Empresas" a "empresas"
     const insertText = `
-      INSERT INTO Empresas (razon_social, identificador_fiscal, tipo_empresa, tamano_empresa, id_ciudad, direccion_especifica)
+      INSERT INTO empresas (razon_social, identificador_fiscal, tipo_empresa, tamano_empresa, id_ciudad, direccion_especifica)
       VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING id_empresa, razon_social, fecha_registro;
     `;
@@ -94,7 +96,7 @@ app.post('/api/empresas/registrar', async (req, res) => {
       return res.status(400).json({ error: 'El identificador fiscal (RIF/NIT) ya está registrado en el ecosistema.' });
     }
     
-    res.status(500).json({ error: 'Error de conexión con la base de datos de cPanel.', detalle: error.message });
+    res.status(500).json({ error: 'Error de conexión con la base de datos.', detalle: error.message });
   }
 });
 
