@@ -1,8 +1,12 @@
 const express = require('express');
+const cors = require('cors'); // Habilitado para permitir la conexión desde el frontend estático
 const { Pool } = require('pg');
 require('dotenv').config();
 
 const app = express();
+
+// CONFIGURACIÓN DE SEGURIDAD CRÍTICA: Permite que tu frontend de Render lea y guarde datos
+app.use(cors()); 
 app.use(express.json());
 
 // Configuración de la conexión a PostgreSQL con cPanel / Neon
@@ -13,7 +17,6 @@ const pool = new Pool({
   password: process.env.DB_PASSWORD,
   port: parseInt(process.env.DB_PORT || '5432', 10),
   connectionTimeoutMillis: 5000, // Aborta la petición a los 5 segundos si hay bloqueo
-  // CONFIGURACIÓN CRÍTICA: Forzamos compatibilidad de SSL con Neon y cPanel remotos
   ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false
 });
 
@@ -31,12 +34,11 @@ app.get('/api/status', (req, res) => {
   res.json({ status: 'Online', project: 'Holdinvest B2B Staging' });
 });
 
-// 2. Endpoint de Búsqueda Avanzada B2B (GET) - CORREGIDO A MINÚSCULAS
+// 2. Endpoint de Búsqueda Avanzada B2B (GET)
 app.get('/api/empresas/buscar', async (req, res) => {
   try {
     const { tamano, region, estado, tipo } = req.query;
     
-    // Se pasaron a minúsculas todos los nombres de tablas y campos para PostgreSQL estándar
     let queryText = `
       SELECT 
         e.id_empresa, e.razon_social, e.identificador_fiscal, e.tipo_empresa, e.tamano_empresa,
@@ -68,7 +70,7 @@ app.get('/api/empresas/buscar', async (req, res) => {
   }
 });
 
-// 3. Registrar Nueva Empresa B2B (POST) - CORREGIDO A MINÚSCULAS
+// 3. Registrar Nueva Empresa B2B (POST)
 app.post('/api/empresas/registrar', async (req, res) => {
   try {
     const { razon_social, identificador_fiscal, tipo_empresa, tamano_empresa, id_ciudad, direccion_especifica } = req.body;
@@ -77,7 +79,6 @@ app.post('/api/empresas/registrar', async (req, res) => {
       return res.status(400).json({ error: 'Faltan campos obligatorios para procesar el registro comercial.' });
     }
 
-    // Se cambió el nombre de la tabla "Empresas" a "empresas"
     const insertText = `
       INSERT INTO empresas (razon_social, identificador_fiscal, tipo_empresa, tamano_empresa, id_ciudad, direccion_especifica)
       VALUES ($1, $2, $3, $4, $5, $6)
@@ -87,7 +88,7 @@ app.post('/api/empresas/registrar', async (req, res) => {
     const values = [razon_social, identificador_fiscal, tipo_empresa, tamano_empresa, id_ciudad, direccion_especifica || null];
     
     const { rows } = await pool.query(insertText, values);
-    res.status(201).json({ mensaje: 'Empresa afiliada con éxito', datos_empresa: rows[0] });
+    res.status(201).json({ mensaje: 'Empresa afiliada con éxito', datos_empresa: rows });
 
   } catch (error) {
     console.error('Error al insertar registro comercial:', error.message);
@@ -104,4 +105,3 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Servidor B2B Holdinvest corriendo exitosamente en puerto ${PORT}`);
 });
-// Reinicio forzado piloto
