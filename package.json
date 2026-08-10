@@ -13,6 +13,6 @@
     "pg": "^8.11.5"
   },
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
   "nodemailer": "^6.9.13"
 }
