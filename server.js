@@ -4,7 +4,7 @@ const cors = require('cors');
 const nodemailer = require('nodemailer'); 
 require('dotenv').config();
 
-const app = express(); // CORREGIDO: Se removió la palabra 'report' que causaba el fallo
+const app = express();
 
 // CONFIGURACIÓN DE CORS
 app.use(cors());
@@ -89,7 +89,7 @@ app.get('/api/empresas/buscar', async (req, res) => {
   }
 });
 
-// ENDPOINT DE REGISTRO (POST) - INTEGRADO CON ALERTAS AUTOMÁTICAS POR CORREO
+// ENDPOINT DE REGISTRO (POST) - CONFIGURADO PARA LEER CORRECTAMENTE LA RESPUESTA
 app.post('/api/empresas/registrar', async (req, res) => {
   try {
     const { razon_social, identificador_fiscal, tipo_empresa, tamano_empresa, id_ciudad } = req.body;
@@ -119,7 +119,7 @@ app.post('/api/empresas/registrar', async (req, res) => {
       }
     });
 
-    // 3. ESTRUCTURA Y DISEÑO DEL CORREO DE ALERTA (Formato HTML Limpio)
+    // 3. ESTRUCTURA Y DISEÑO DEL CORREO DE ALERTA
     const mailOptions = {
       from: `"BIDAccess Platform" <${process.env.EMAIL_USER}>`,
       to: process.env.EMAIL_RECEIVER, 
@@ -168,8 +168,8 @@ app.post('/api/empresas/registrar', async (req, res) => {
       }
     });
 
-    // 5. Responder de forma exitosa al cliente web
-    res.status(201).json({ success: true, datos: rows });
+    // 5. RESPUESTA CORREGIDA: Se devuelve rows[0] (el objeto único esperado por tu script)
+    res.status(201).json({ success: true, datos: rows[0] });
 
   } catch (error) {
     console.error('Error al registrar empresa:', error);
