@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Holdinvest B2B - Panel de Control</title>
+</head>
+<body>
+
+    <!-- Estado de la API -->
+    <header>
+        <h1>💼 BIDAccess B2B/B2C Platform</h1>
+        <p><strong>Estado:</strong> API Conectada</p>
+    </header>
+
+    <main>
+        <!-- SECCIÓN DE BÚSQUEDA AVANZADA (PROTAGONISTA) -->
+        <section id="modulo-busqueda">
+            <h2>🔍 Buscar Empresas</h2>
+            
+            <search>
+                <form id="searchForm" role="search" onsubmit="event.preventDefault();">
+                    <div class="search-input-wrapper">
+                        <!-- Entrada principal optimizada -->
+                        <input 
+                            type="search" 
+                            id="companySearch" 
+                            name="q" 
+                            placeholder="Busca por razón social, identificador fiscal (RIF/NIT), tecnología o servicio..." 
+                            autocomplete="off"
+                            style="width: 70%; padding: 8px;"
+                        >
+                        <button type="submit" style="padding: 8px 16px;">Buscar</button>
+                    </div>
+
+                    <!-- Filtros rápidos tipo 'Chips' integrados para facilitar la navegación interactiva -->
+                    <div class="quick-filters" style="margin-top: 10px; margin-bottom: 15px;">
+                        <span style="font-size: 0.9em; margin-right: 10px;">Filtros rápidos por sector:</span>
+                        <button type="button" class="chip-filter" data-filter="tecnologia">💻 Tecnología</button>
+                        <button type="button" class="chip-filter" data-filter="manufactura">🏭 Manufactura</button>
+                        <button type="button" class="chip-filter" data-filter="servicios">🛠️ Servicios</button>
+                        <button type="button" class="chip-filter" data-filter="comercio">🛒 Comercio</button>
+                    </div>
+
+                    <!-- Filtros avanzados organizados semánticamente -->
+                    <div class="advanced-filters" style="display: flex; gap: 20px; margin-bottom: 20px;">
+                        <div>
+                            <label for="filterSize">Tamaño de Empresa:</label>
+                            <select id="filterSize" name="size">
+                                <option value="todos">Todos los tamaños</option>
+                                <option value="pequena">Pequeña</option>
+                                <option value="mediana">Mediana</option>
+                                <option value="grande">Grande</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="filterCity">Ciudad Piloto:</label>
+                            <input type="text" id="filterCity" placeholder="Ej. Caracas">
+                        </div>
+                    </div>
+                </form>
+                
+                <!-- Contenedor dinámico invisible para el menú desplegable de autocompletado automático -->
+                <div id="searchSuggestions" class="suggestions-dropdown" style="display: none; border: 1px solid #ccc; position: absolute; background: white; z-index: 10;"></div>
+            </search>
+
+            <!-- Sección de Resultados Dinámica con manejo del estado de error y vacío -->
+            <h3>Resultados comerciales</h3>
+            <div id="searchResultsContainer">
+                <!-- Se inicializa con el estado previo para mantener consistencia visual -->
+                <p id="resultsCounter"><strong>0</strong> Encontradas</p>
+                
+                <!-- Contenedor alternativo para sugerencias reactivas cuando no hay coincidencias -->
+                <div id="noResultsMessage" style="display: none; padding: 15px; border-left: 4px solid #ffcc00; margin-top: 10px;">
+                    <p>⚠️ <strong>No se encontraron resultados exactos.</strong></p>
+                    <p>Prueba lo siguiente para mejorar tu búsqueda:</p>
+                    <ul>
+                        <li>Verifica la ortografía o el formato del RIF/NIT.</li>
+                        <li>Intenta remover filtros de tamaño o sector para ampliar el rango.</li>
+                        <li>Utiliza palabras clave generales (ej. "Servicios" en lugar del nombre exacto).</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <hr style="margin: 40px 0;">
+
+        <!-- SECCIÓN DE REGISTRO (SECUNDARIA PARA MEJORAR EL FLUJO FOCUS) -->
+        <section id="modulo-registro">
+            <h2>➕ Registrar Nueva Empresa</h2>
+            <form id="registerForm">
+                <div style="margin-bottom: 10px;">
+                    <label for="razonSocial">Razón Social:</label><br>
+                    <input type="text" id="razonSocial" required>
+                </div>
+
+                <div style="margin-bottom: 10px;">
+                    <label for="rif">Identificador Fiscal (RIF/NIT):</label><br>
+                    <input type="text" id="rif" required>
+                </div>
+
+                <fieldset style="margin-bottom: 10px;">
+                    <legend>Tipo de Empresa</legend>
+                    <label><input type="radio" name="tipoEmpresa" value="tecnologia"> Tecnología</label><br>
+                    <label><input type="radio" name="tipoEmpresa" value="manufactura"> Manufactura</label><br>
+                    <label><input type="radio" name="tipoEmpresa" value="servicios"> Servicios</label><br>
+                    <label><input type="radio" name="tipoEmpresa" value="comercio"> Comercio</label>
+                </fieldset>
+
+                <fieldset style="margin-bottom: 10px;">
+                    <legend>Tamaño</legend>
+                    <label><input type="radio" name="tamanoEmpresa" value="pequena"> Pequeña</label><br>
+                    <label><input type="radio" name="tamanoEmpresa" value="mediana"> Mediana</label><br>
+                    <label><input type="radio" name="tamanoEmpresa" value="grande"> Grande</label>
+                </fieldset>
+
+                <div style="margin-bottom: 10px;">
+                    <label for="ciudadPiloto">Ciudad Piloto:</label><br>
+                    <input type="text" id="ciudadPiloto">
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label for="direccion">Dirección Específica:</label><br>
+                    <textarea id="direccion" rows="3" style="width: 100%; max-width: 400px;"></textarea>
+                </div>
+
+                <button type="submit" style="padding: 10px 20px;">Solicitar Afiliación</button>
+            </form>
+        </section>
+    </main>
+
+    <!-- Script básico integrado para controlar estados lógicos interactivos de la interfaz de búsqueda -->
+    <script>
+        // Lógica de simulación para cambiar los estados de la interfaz sin modificar propiedades estéticas
+        const searchInput = document.getElementById('companySearch');
+        const resultsCounter = document.getElementById('resultsCounter');
+        const noResultsMessage = document.getElementById('noResultsMessage');
+
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.trim();
+            
+            // Simulación interactiva: si el usuario escribe y no encuentra coincidencias
+            if (query.length > 3) {
+                resultsCounter.innerHTML = "<strong>0</strong> Encontradas";
+                noResultsMessage.style.display = "block";
+            } else {
+                resultsCounter.innerHTML = "<strong>0</strong> Encontradas";
+                noResultsMessage.style.display = "none";
+            }
+        });
+    </script>
+</body>
+</html>
