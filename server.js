@@ -89,7 +89,7 @@ app.get('/api/empresas/buscar', async (req, res) => {
   }
 });
 
-// ENDPOINT DE REGISTRO (POST) - CONFIGURADO CON PUERTO SEGURO PARA NODEMAILER
+// ENDPOINT DE REGISTRO (POST) - INTEGRADO CON PURGADO AUTOMÁTICO DE VARIABLES
 app.post('/api/empresas/registrar', async (req, res) => {
   try {
     const { razon_social, identificador_fiscal, tipo_empresa, tamano_empresa, id_ciudad } = req.body;
@@ -110,21 +110,26 @@ app.post('/api/empresas/registrar', async (req, res) => {
     
     const { rows } = await pool.query(queryText, values);
 
-    // 2. CONFIGURACIÓN DEL TRANSPORTE SMTP (PUERTO TLS/SSL 465)
+    // 2. FILTRO ANTI-ERROR: Limpieza forzada de caracteres URL y espacios invisibles
+    const cleanEmailUser = (process.env.EMAIL_USER || '').replace('://', '').trim();
+    const cleanEmailReceiver = (process.env.EMAIL_RECEIVER || '').replace('://', '').trim();
+    const cleanEmailPass = (process.env.EMAIL_PASS || '').trim();
+
+    // 3. CONFIGURACIÓN DEL TRANSPORTE SMTP (PUERTO SEGURO 465)
     const transporter = nodemailer.createTransport({
       host: '://gmail.com',
       port: 465,
       secure: true, 
       auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
+        user: cleanEmailUser,
+        pass: cleanEmailPass
       }
     });
 
-    // 3. ESTRUCTURA Y DISEÑO DEL CORREO DE ALERTA
+    // 4. ESTRUCTURA Y DISEÑO DEL CORREO DE ALERTA
     const mailOptions = {
-      from: process.env.EMAIL_USER, // CORREGIDO: Se usa directamente la variable limpia sin parsear caracteres de texto extra
-      to: process.env.EMAIL_RECEIVER, 
+      from: cleanEmailUser, 
+      to: cleanEmailReceiver, 
       subject: `🚨 Nueva Solicitud de Afiliación B2B: ${razon_social}`,
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 16px; padding: 24px; background-color: #ffffff;">
@@ -161,7 +166,7 @@ app.post('/api/empresas/registrar', async (req, res) => {
       `
     };
 
-    // 4. Despachar el correo electrónico en segundo plano
+    // 5. Despachar el correo electrónico en segundo plano
     transporter.sendMail(mailOptions, (mailErr, info) => {
       if (mailErr) {
         console.error('Error al enviar el correo de notificación:', mailErr);
@@ -170,7 +175,7 @@ app.post('/api/empresas/registrar', async (req, res) => {
       }
     });
 
-    // 5. Responder de forma exitosa al cliente web
+    // 6. Responder de forma exitosa al cliente web (Formato esperado por tu index)
     res.status(201).json({ success: true, datos: rows });
 
   } catch (error) {
