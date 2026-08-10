@@ -97,7 +97,9 @@
         // 🔍 LÓGICA DE BÚSQUEDA DE EMPRESAS (Se mantiene tu formato original)
         // =========================================================
         async function buscarEmpresas() {
-            const region = document.getElementById('filtroRegion').value;
+            const ciudadId = document.getElementById('search-ciudad').value;
+// ... objeto enviado a la API: { ciudad_id: ciudadId }
+
             const tamano = document.getElementById('filtroTamano').value;
             const grid = document.getElementById('gridResultados');
             const contador = document.getElementById('contadorResultados');
