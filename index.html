@@ -87,7 +87,28 @@
         <section class="md:col-span-2 space-y-6">
             <div class="bg-white p-4 rounded-2xl shadow border border-gray-100 flex flex-wrap gap-4 items-center justify-between">
                 <div class="flex flex-wrap gap-3 items-center flex-1">
-                    <input type="text" id="filtroCiudad" placeholder="Filtrar por Ciudad..." class="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 text-sm min-w-[150px]">
+                   <!-- NUEVO DESPLEGABLE CORREGIDO (Conserva tus mismos estilos) -->
+<select id="filtroCiudad" class="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 text-sm min-w-[150px] bg-white">
+    <option value="">Todas las ciudades</option>
+    <option value="Caracas">Caracas</option>
+    <option value="Chacao">Chacao</option>
+    <option value="Baruta">Baruta</option>
+    <option value="Los Teques">Los Teques</option>
+    <option value="Maracay">Maracay</option>
+    <option value="Valencia">Valencia</option>
+    <option value="Maracaibo">Maracaibo</option>
+    <option value="Punto Fijo">Punto Fijo</option>
+    <option value="Barquisimeto">Barquisimeto</option>
+    <option value="Mérida">Mérida</option>
+    <option value="San Cristóbal">San Cristóbal</option>
+    <option value="Acarigua">Acarigua</option>
+    <option value="Puerto La Cruz">Puerto La Cruz</option>
+    <option value="Lechería">Lechería</option>
+    <option value="Maturín">Maturín</option>
+    <option value="Ciudad Guayana (Puerto Ordaz)">Ciudad Guayana (Puerto Ordaz)</option>
+    <option value="Porlamar">Porlamar</option>
+</select>
+
                     <select id="filtroTamano" class="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 text-sm bg-white">
                         <option value="">Todos los tamaños</option>
                         <option value="Pequeña">Pequeña</option>
