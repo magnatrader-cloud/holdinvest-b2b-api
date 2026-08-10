@@ -4,7 +4,7 @@ const cors = require('cors');
 const nodemailer = require('nodemailer'); 
 require('dotenv').config();
 
-const app = report = express();
+const app = express(); // CORREGIDO: Se removió la palabra 'report' que causaba el fallo
 
 // CONFIGURACIÓN DE CORS
 app.use(cors());
