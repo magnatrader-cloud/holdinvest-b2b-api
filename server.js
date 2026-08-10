@@ -26,7 +26,46 @@ app.get('/api', (req, res) => {
   res.json({ status: 'Online', message: 'Bienvenido a la API de BIDAccess B2B' });
 });
 
-// ENDPOINT DE BÚSQUEDA AVANZADA B2B
+// =========================================================
+// 🗺️ ENDPOINTS GEOGRÁFICOS PARA FILTROS DINÁMICOS
+// =========================================================
+
+// 1. Obtener todas las regiones para el buscador
+app.get('/api/regiones', async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT DISTINCT nombre_region FROM regiones WHERE nombre_region IS NOT NULL ORDER BY nombre_region;');
+    res.json(rows);
+  } catch (error) {
+    console.error('Error al obtener regiones:', error);
+    res.status(500).json({ error: 'Error al cargar regiones' });
+  }
+});
+
+// 2. Obtener todos los estados para el buscador
+app.get('/api/estados', async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT DISTINCT nombre_estado FROM estados WHERE nombre_estado IS NOT NULL ORDER BY nombre_estado;');
+    res.json(rows);
+  } catch (error) {
+    console.error('Error al obtener estados:', error);
+    res.status(500).json({ error: 'Error al cargar estados' });
+  }
+});
+
+// 3. Obtener todas las ciudades para el buscador
+app.get('/api/ciudades', async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT id_ciudad, nombre_ciudad FROM ciudades WHERE nombre_ciudad IS NOT NULL ORDER BY nombre_ciudad;');
+    res.json(rows);
+  } catch (error) {
+    console.error('Error al obtener ciudades:', error);
+    res.status(500).json({ error: 'Error al cargar ciudades' });
+  }
+});
+
+// =========================================================
+// 🔍 ENDPOINT DE BÚSQUEDA AVANZADA B2B
+// =========================================================
 app.get('/api/empresas/buscar', async (req, res) => {
   try {
     const { tamano, region, estado, ciudad, tipo } = req.query;
@@ -89,7 +128,9 @@ app.get('/api/empresas/buscar', async (req, res) => {
   }
 });
 
-// ENDPOINT DE REGISTRO (POST) - INTEGRADO CON PURGADO AUTOMÁTICO DE VARIABLES
+// =========================================================
+// ➕ ENDPOINT DE REGISTRO (POST)
+// =========================================================
 app.post('/api/empresas/registrar', async (req, res) => {
   try {
     const { razon_social, identificador_fiscal, tipo_empresa, tamano_empresa, id_ciudad } = req.body;
@@ -100,7 +141,6 @@ app.post('/api/empresas/registrar', async (req, res) => {
 
     const ciudadIdEntero = parseInt(id_ciudad || '1', 10);
 
-    // 1. Almacenar el registro en la base de datos de Neon
     const queryText = `
       INSERT INTO empresas (razon_social, identificador_fiscal, tipo_empresa, tamano_empresa, id_ciudad)
       VALUES ($1, $2, $3, $4, $5)
@@ -110,12 +150,11 @@ app.post('/api/empresas/registrar', async (req, res) => {
     
     const { rows } = await pool.query(queryText, values);
 
-    // 2. FILTRO ANTI-ERROR: Limpieza forzada de caracteres URL y espacios invisibles
+    // Filtro asíncrono secundario blindado para la mensajería
     const cleanEmailUser = (process.env.EMAIL_USER || '').replace('://', '').trim();
     const cleanEmailReceiver = (process.env.EMAIL_RECEIVER || '').replace('://', '').trim();
     const cleanEmailPass = (process.env.EMAIL_PASS || '').trim();
 
-    // 3. CONFIGURACIÓN DEL TRANSPORTE SMTP (PUERTO SEGURO 465)
     const transporter = nodemailer.createTransport({
       host: '://gmail.com',
       port: 465,
@@ -126,56 +165,17 @@ app.post('/api/empresas/registrar', async (req, res) => {
       }
     });
 
-    // 4. ESTRUCTURA Y DISEÑO DEL CORREO DE ALERTA
     const mailOptions = {
       from: cleanEmailUser, 
       to: cleanEmailReceiver, 
       subject: `🚨 Nueva Solicitud de Afiliación B2B: ${razon_social}`,
-      html: `
-        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 16px; padding: 24px; background-color: #ffffff;">
-          <h2 style="color: #1e3a8a; margin-top: 0; font-size: 20px;">💼 Nueva Solicitud de Afiliación</h2>
-          <p style="color: #4b5563; font-size: 14px;">Se ha recibido y guardado una nueva solicitud comercial en la plataforma. Detalles del registro:</p>
-          
-          <table style="width: 100%; border-collapse: collapse; margin-top: 16px; margin-bottom: 20px;">
-            <tr>
-              <td style="padding: 10px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; font-weight: bold; color: #6b7280; text-transform: uppercase; width: 35%;">Razón Social:</td>
-              <td style="padding: 10px 0; border-bottom: 1px solid #f3f4f6; font-size: 14px; color: #111827; font-weight: 600;">${razon_social}</td>
-            </tr>
-            <tr>
-              <td style="padding: 10px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; font-weight: bold; color: #6b7280; text-transform: uppercase;">ID Fiscal (RIF/NIT):</td>
-              <td style="padding: 10px 0; border-bottom: 1px solid #f3f4f6; font-size: 14px; color: #111827; font-family: monospace;">${identificador_fiscal}</td>
-            </tr>
-            <tr>
-              <td style="padding: 10px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; font-weight: bold; color: #6b7280; text-transform: uppercase;">Tipo de Empresa:</td>
-              <td style="padding: 10px 0; border-bottom: 1px solid #f3f4f6; font-size: 14px; color: #111827;">${tipo_empresa || 'Comercial'}</td>
-            </tr>
-            <tr>
-              <td style="padding: 10px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; font-weight: bold; color: #6b7280; text-transform: uppercase;">Tamaño:</td>
-              <td style="padding: 10px 0; border-bottom: 1px solid #f3f4f6; font-size: 14px; color: #111827;">${tamano_empresa || 'No especificado'}</td>
-            </tr>
-            <tr>
-              <td style="padding: 10px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; font-weight: bold; color: #6b7280; text-transform: uppercase;">ID Ciudad Piloto:</td>
-              <td style="padding: 10px 0; border-bottom: 1px solid #f3f4f6; font-size: 14px; color: #111827;">${ciudadIdEntero}</td>
-            </tr>
-          </table>
-          
-          <div style="padding: 12px; background-color: #f0fdf4; border-radius: 8px; text-align: center;">
-            <span style="color: #166534; font-size: 13px; font-weight: bold;">Estatus: Registro persistido en la base de datos Neon</span>
-          </div>
-        </div>
-      `
+      html: `<p>Se ha recibido una nueva solicitud comercial para la Razón Social: <b>${razon_social}</b></p>`
     };
 
-    // 5. Despachar el correo electrónico en segundo plano
-    transporter.sendMail(mailOptions, (mailErr, info) => {
-      if (mailErr) {
-        console.error('Error al enviar el correo de notificación:', mailErr);
-      } else {
-        console.log('Notificación por correo enviada exitosamente:', info.response);
-      }
+    transporter.sendMail(mailOptions, (mailErr) => {
+      if (mailErr) console.error('Aviso de despacho pausado:', mailErr.message);
     });
 
-    // 6. Responder de forma exitosa al cliente web (Formato esperado por tu index)
     res.status(201).json({ success: true, datos: rows });
 
   } catch (error) {
@@ -190,7 +190,7 @@ app.post('/api/empresas/registrar', async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Servidor BIDAccess corriendo en puerto ${PORT}`);
+// ARRANQUE DEL SERVIDOR EN LA NUBE
+app.listen(process.env.PORT || 3000, () => {
+  console.log(`Servidor BIDAccess corriendo en puerto ${process.env.PORT || 3000}`);
 });
