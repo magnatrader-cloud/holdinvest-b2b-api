@@ -21,7 +21,7 @@ const pool = new Pool({
   ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false
 });
 
-// Ruta Base de Verificación (Apunta a la ruta que probamos antes)
+// Ruta Base de Verificación
 app.get('/api', (req, res) => {
   res.json({ status: 'Online', message: 'Bienvenido a la API de Holdinvest B2B' });
 });
@@ -50,7 +50,6 @@ app.get('/api/empresas/buscar', async (req, res) => {
       LEFT JOIN camaras_gremios g ON a.id_gremio = g.id_gremio
       WHERE 1=1
     `;
-    // Nota: Se cambiaron los nombres de las tablas a minúsculas para coincidir exactamente con Postgres de Neon
     
     const queryParams = [];
     let paramCounter = 1;
@@ -84,25 +83,13 @@ app.get('/api/empresas/buscar', async (req, res) => {
     const { rows } = await pool.query(queryText, queryParams);
     res.json({ total_resultados: rows.length, datos: rows });
 
-   } catch (error) {
-    console.error('Error al registrar empresa:', error);
-    
-    // CASO A: Clave duplicada (RIF ya registrado)
-    if (error.code === '23505') { 
-      return res.status(400).json({ error: 'El identificador fiscal ya se encuentra registrado' });
-    }
-    
-    // CASO B: Clave foránea inválida (La ciudad con ese ID no existe en Neon)
-    if (error.code === '23503') {
-      return res.status(400).json({ error: 'El ID de ciudad ingresado no existe en el sistema' });
-    }
-    
-    // Cualquier otro error de base de datos
-    res.status(500).json({ error: `Fallo en base de datos: ${error.message}` });
+  } catch (error) {
+    console.error('Error en búsqueda B2B:', error);
+    res.status(500).json({ error: 'Error interno del servidor de desarrollo' });
   }
-);
+});
 
-// ENDPOINT DE REGISTRO (POST): Agregado para procesar las altas desde tu formulario del frontend
+// ENDPOINT DE REGISTRO (POST) - CORREGIDO CON CONTROL DE LLAVES FORÁNEAS
 app.post('/api/empresas/registrar', async (req, res) => {
   try {
     const { razon_social, identificador_fiscal, tipo_empresa, tamano_empresa, id_ciudad } = req.body;
@@ -123,9 +110,18 @@ app.post('/api/empresas/registrar', async (req, res) => {
 
   } catch (error) {
     console.error('Error al registrar empresa:', error);
-    if (error.code === '23505') { // Código de error de clave duplicada en Postgres
+    
+    // Error 23505: Clave duplicada (El RIF ya existe en Neon)
+    if (error.code === '23505') { 
       return res.status(400).json({ error: 'El identificador fiscal ya se encuentra registrado' });
     }
+    
+    // Error 23503: Violación de llave foránea (El id_ciudad no existe en la tabla ciudades)
+    if (error.code === '23503') {
+      return res.status(400).json({ error: 'El ID de Ciudad Piloto ingresado no existe en el sistema' });
+    }
+    
+    // Error genérico del servidor
     res.status(500).json({ error: 'Error al procesar el registro en la base de datos' });
   }
 });
@@ -134,3 +130,4 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Servidor B2B Holdinvest corriendo en puerto ${PORT}`);
 });
+
