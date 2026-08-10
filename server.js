@@ -89,7 +89,7 @@ app.get('/api/empresas/buscar', async (req, res) => {
   }
 });
 
-// ENDPOINT DE REGISTRO (POST) - CONFIGURADO PARA LEER CORRECTAMENTE LA RESPUESTA
+// ENDPOINT DE REGISTRO (POST) - CONFIGURADO CON PUERTO SEGURO PARA NODEMAILER
 app.post('/api/empresas/registrar', async (req, res) => {
   try {
     const { razon_social, identificador_fiscal, tipo_empresa, tamano_empresa, id_ciudad } = req.body;
@@ -110,9 +110,11 @@ app.post('/api/empresas/registrar', async (req, res) => {
     
     const { rows } = await pool.query(queryText, values);
 
-    // 2. CONFIGURACIÓN DEL TRANSPORTE SMTP (Nodemailer)
+    // 2. CONFIGURACIÓN DEL TRANSPORTE SMTP SEGÚN EXIGENCIA DE RENDER (PUERTO TLS/SSL 465)
     const transporter = nodemailer.createTransport({
-      service: 'gmail', 
+      host: '://gmail.com',
+      port: 465,
+      secure: true, // Forzado en true para cifrar la conexión y evitar timeouts de red
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
@@ -168,8 +170,8 @@ app.post('/api/empresas/registrar', async (req, res) => {
       }
     });
 
-    // 5. RESPUESTA CORREGIDA: Se devuelve rows[0] (el objeto único esperado por tu script)
-    res.status(201).json({ success: true, datos: rows[0] });
+    // 5. Responder de forma exitosa al cliente web
+    res.status(201).json({ success: true, datos: rows });
 
   } catch (error) {
     console.error('Error al registrar empresa:', error);
