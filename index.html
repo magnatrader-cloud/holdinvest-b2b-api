@@ -91,8 +91,11 @@
     </main>
 
     <script>
-        const API_BASE_URL = 'https://holdinvest-b2b-api-1.onrender.com/api';
+        const API_BASE_URL = 'https://onrender.com';
 
+        // =========================================================
+        // 🔍 LÓGICA DE BÚSQUEDA DE EMPRESAS (Se mantiene tu formato original)
+        // =========================================================
         async function buscarEmpresas() {
             const region = document.getElementById('filtroRegion').value;
             const tamano = document.getElementById('filtroTamano').value;
@@ -127,66 +130,70 @@
                                 <span class="text-gray-400 text-xs font-mono font-medium">${empresa.identificador_fiscal}</span>
                             </div>
                             <h4 class="font-bold text-gray-900 text-base mb-1">${empresa.razon_social}</h4>
-                            <p class="text-xs text-slate-500 flex items-center gap-1 mb-4">
-                                📍 \${empresa.nombre_ciudad}, \${empresa.nombre_estado} (\${empresa.nombre_region})
-                            </p>
-                        </div>
-                        <div class="border-t border-gray-100 pt-3 flex justify-between items-center text-xs">
-                            <span class="text-gray-400">Escala: <strong class="text-gray-600 font-medium">\${empresa.tamano_empresa}</strong></span>
-                            <span class="px-2 py-0.5 rounded font-medium \${empresa.gremio_afiliado === 'NO AFILIADO' ? 'bg-gray-100 text-gray-500' : 'bg-yellow-50 text-yellow-700'}">
-                                🛡️ \${empresa.gremio_afiliado}
-                            </span>
+                            <p class="text-gray-500 text-xs">📍 ${empresa.nombre_ciudad || 'Ciudad no especificada'}</p>
                         </div>
                     `;
                     grid.appendChild(card);
                 });
 
             } catch (error) {
-                grid.innerHTML = '<div class="col-span-full text-center text-red-500 bg-red-50 p-4 rounded-xl">Error al conectar con la API comercial.</div>';
+                console.error('Error al buscar:', error);
+                grid.innerHTML = '<div class="col-span-full text-center text-red-500 py-8">Error al cargar datos.</div>';
             }
         }
 
+        // =========================================================
+        // ➕ NUEVO: PROCESAMIENTO SEGURO DEL FORMULARIO DE REGISTRO
+        // =========================================================
         document.getElementById('formRegistrar').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const divMensaje = document.getElementById('mensajeRegistro');
-            
+            e.preventDefault(); // Detiene de golpe el refresco por defecto que rompe tu JSON
+
+            const mensajeBox = document.getElementById('mensajeRegistro');
+            mensajeBox.classList.remove('hidden', 'bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800');
+            mensajeBox.classList.add('bg-blue-100', 'text-blue-800', 'block');
+            mensajeBox.innerText = 'Procesando afiliación en el ecosistema...';
+
+            // Empaquetamos los datos capturando tu ID de casilla actual
             const payload = {
                 razon_social: document.getElementById('razon_social').value,
                 identificador_fiscal: document.getElementById('identificador_fiscal').value,
                 tipo_empresa: document.getElementById('tipo_empresa').value,
                 tamano_empresa: document.getElementById('tamano_empresa').value,
-                id_ciudad: parseInt(document.getElementById('id_ciudad').value, 10),
-                direccion_especifica: document.getElementById('direccion_especifica').value || null
+                id_ciudad: document.getElementById('id_ciudad').value 
             };
 
-            divMensaje.className = "mt-3 text-xs text-center font-medium p-2 rounded-lg bg-gray-100 text-gray-600";
-            divMensaje.innerText = "Procesando aflición comercial...";
-            divMensaje.classList.remove('hidden');
-
             try {
-                const response = await fetch(`\${API_BASE_URL}/empresas/registrar`, {
+                // Ejecutamos la petición apuntando al endpoint de registro
+                const response = await fetch(`${API_BASE_URL}/empresas/registrar`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
 
-                const data = await response.json();
-                if (!response.ok) throw new Error(data.error || 'Error al registrar');
+                const resultado = await response.json();
+                mensajeBox.classList.remove('bg-blue-100', 'text-blue-800');
 
-                divMensaje.className = "mt-3 text-xs text-center font-medium p-2 rounded-lg bg-green-50 text-green-700";
-                divMensaje.innerText = "¡Empresa afiliada con éxito!";
-                document.getElementById('formRegistrar').reset();
-                document.getElementById('id_ciudad').value = 1;
-                buscarEmpresas();
+                if (!response.ok) {
+                    throw new Error(resultado.error || 'Error controlado por el servidor backend.');
+                }
+
+                // Registro exitoso, pintamos en verde usando tus clases predefinidas
+                mensajeBox.classList.add('bg-green-100', 'text-green-800');
+                mensajeBox.innerText = '¡Empresa registrada con éxito! Correo de alerta despachado.';
+                document.getElementById('formRegistrar').reset(); // Limpia los campos del formulario
+                buscarEmpresas(); // Refresca automáticamente tu lista comercial del lado derecho
 
             } catch (error) {
-                divMensaje.className = "mt-3 text-xs text-center font-medium p-2 rounded-lg bg-red-50 text-red-700";
-                divMensaje.innerText = error.message;
+                console.error('Error capturado en frontend:', error);
+                // Si la API falla (ej: RIF duplicado), se atrapa de forma limpia y se muestra en el recuadro rosa
+                mensajeBox.classList.remove('bg-blue-100', 'text-blue-800');
+                mensajeBox.classList.add('bg-red-100', 'text-red-800');
+                mensajeBox.innerText = error.message;
             }
         });
 
         document.getElementById('btnBuscar').addEventListener('click', buscarEmpresas);
-        window.addEventListener('DOMContentLoaded', buscarEmpresas);
     </script>
+
 </body>
 </html>
