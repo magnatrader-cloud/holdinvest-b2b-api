@@ -4,7 +4,7 @@ const cors = require('cors');
 const nodemailer = require('nodemailer'); 
 require('dotenv').config();
 
-const app = express();
+const app = report = express();
 
 // CONFIGURACIÓN DE CORS
 app.use(cors());
@@ -26,7 +26,7 @@ app.get('/api', (req, res) => {
   res.json({ status: 'Online', message: 'Bienvenido a la API de BIDAccess B2B' });
 });
 
-// ENDPOINT DE BÚSQUEDA AVANZADA B2B (Se mantiene tu formato original)
+// ENDPOINT DE BÚSQUEDA AVANZADA B2B
 app.get('/api/empresas/buscar', async (req, res) => {
   try {
     const { tamano, region, estado, ciudad, tipo } = req.query;
@@ -98,7 +98,6 @@ app.post('/api/empresas/registrar', async (req, res) => {
       return res.status(400).json({ error: 'Razón Social e Identificador Fiscal son obligatorios' });
     }
 
-    // UBICACIÓN CORRECTA: La conversión se ejecuta aquí adentro, donde id_ciudad sí está definido
     const ciudadIdEntero = parseInt(id_ciudad || '1', 10);
 
     // 1. Almacenar el registro en la base de datos de Neon
@@ -183,12 +182,6 @@ app.post('/api/empresas/registrar', async (req, res) => {
     res.status(500).json({ error: 'Error al procesar el registro en la base de datos' });
   }
 });
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Servidor BIDAccess corriendo en puerto ${PORT}`);
-});
-
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
