@@ -46,7 +46,7 @@ app.get('/api/empresas/buscar', async (req, res) => {
       JOIN ciudades c ON e.id_ciudad = c.id_ciudad
       JOIN estados est ON c.id_estado = est.id_estado
       JOIN regiones r ON est.id_region = r.id_region
-      LEFT JOIN affiliations_gremios a ON e.id_empresa = a.id_empresa
+      LEFT JOIN afiliaciones_gremios a ON e.id_empresa = a.id_empresa
       LEFT JOIN camaras_gremios g ON a.id_gremio = g.id_gremio
       WHERE 1=1
     `;
