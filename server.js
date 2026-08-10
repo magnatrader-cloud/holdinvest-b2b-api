@@ -3,9 +3,15 @@ const { Pool } = require('pg');
 const cors = require('cors'); 
 const nodemailer = require('nodemailer'); // Agregado para el sistema de alertas por correo
 require('dotenv').config();
-
+const ciudadIdEntero = parseInt(id_ciudad || '1', 10);
 const app = express();
-
+const queryText = `
+      INSERT INTO empresas (razon_social, identificador_fiscal, tipo_empresa, tamano_empresa, id_ciudad)
+      VALUES ($1, $2, $3, $4, $5)
+      RETURNING *
+    `;
+    // Enviamos el valor ya transformado a número entero en la posición 5
+    const values = [razon_social, identificador_fiscal, tipo_empresa, tamano_empresa, ciudadIdEntero];
 // CONFIGURACIÓN DE CORS
 app.use(cors());
 app.use(express.json());
