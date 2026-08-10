@@ -14,7 +14,7 @@ const pool = new Pool({
   user: process.env.DB_USER,
   host: process.env.DB_HOST,
   database: process.env.DB_NAME,
-  password: process.env.DB_PASSWORD,
+  password: String(process.env.DB_PASSWORD).trim(),
   port: parseInt(process.env.DB_PORT || '5432', 10),
   connectionTimeoutMillis: 5000, // Aborta la petición a los 5 segundos si hay bloqueo
   ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false
