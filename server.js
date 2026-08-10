@@ -84,11 +84,23 @@ app.get('/api/empresas/buscar', async (req, res) => {
     const { rows } = await pool.query(queryText, queryParams);
     res.json({ total_resultados: rows.length, datos: rows });
 
-  } catch (error) {
-    console.error('Error en búsqueda B2B:', error);
-    res.status(500).json({ error: 'Error interno del servidor de desarrollo' });
+   } catch (error) {
+    console.error('Error al registrar empresa:', error);
+    
+    // CASO A: Clave duplicada (RIF ya registrado)
+    if (error.code === '23505') { 
+      return res.status(400).json({ error: 'El identificador fiscal ya se encuentra registrado' });
+    }
+    
+    // CASO B: Clave foránea inválida (La ciudad con ese ID no existe en Neon)
+    if (error.code === '23503') {
+      return res.status(400).json({ error: 'El ID de ciudad ingresado no existe en el sistema' });
+    }
+    
+    // Cualquier otro error de base de datos
+    res.status(500).json({ error: `Fallo en base de datos: ${error.message}` });
   }
-});
+);
 
 // ENDPOINT DE REGISTRO (POST): Agregado para procesar las altas desde tu formulario del frontend
 app.post('/api/empresas/registrar', async (req, res) => {
