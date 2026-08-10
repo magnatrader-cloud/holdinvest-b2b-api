@@ -117,7 +117,7 @@
         // 🔍 LÓGICA DE BÚSQUEDA DE EMPRESAS (Se mantiene tu formato original)
         // =========================================================
         async function buscarEmpresas() {
-            const region = document.getElementById('filtroRegion').value;
+            const ciudad = document.getElementById('filtroCiudad').value;
             const tamano = document.getElementById('filtroTamano').value;
             const grid = document.getElementById('gridResultados');
             const contador = document.getElementById('contadorResultados');
@@ -126,7 +126,7 @@
 
             try {
                 let url = `${API_BASE_URL}/empresas/buscar?`;
-                if (region) url += `region=${encodeURIComponent(region)}&`;
+                if (ciudad) url += `ciudad=${encodeURIComponent(ciudad)}&`;
                 if (tamano) url += `tamano=${encodeURIComponent(tamano)}`;
 
                 const response = await fetch(url);
