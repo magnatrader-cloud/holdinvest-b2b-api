@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Holdinvest B2B - Panel de Control</title>
+</head>
+<body>
+
+    <h1>💼 BIDAccess B2B/B2C Platform</h1>
+    <p>API Conectada</p>
+
+    <h2>➕ Registrar Nueva Empresa</h2>
+    <form>
+        <p>Razón Social</p>
+        <input type="text" name="razonSocial">
+
+        <p>Identificador Fiscal (RIF/NIT)</p>
+        <input type="text" name="rifNit">
+
+        <p>Tipo</p>
+        <input type="radio" name="tipo" value="tecnologia"> Tecnología<br>
+        <input type="radio" name="tipo" value="manufactura"> Manufactura<br>
+        <input type="radio" name="tipo" value="servicios"> Servicios<br>
+        <input type="radio" name="tipo" value="comercio"> Comercio
+
+        <p>Tamaño</p>
+        <input type="radio" name="tamano" value="pequena"> Pequeña<br>
+        <input type="radio" name="tamano" value="mediana"> Mediana<br>
+        <input type="radio" name="tamano" value="grande"> Grande
+
+        <p>Ciudad Piloto</p>
+        <input type="text" name="ciudadPiloto">
+
+        <p>Dirección Específica</p>
+        <textarea name="direccionEspecifica"></textarea>
+
+        <br><br>
+        <button type="submit">Solicitar Afiliación</button>
+    </form>
+
+    <hr>
+
+    <h2>🔍 Buscar Empresas</h2>
+    <form>
+        <select name="filtroTamano">
+            <option value="todos">Todos los tamaños</option>
+            <option value="pequena">Pequeña</option>
+            <option value="mediana">Mediana</option>
+            <option value="grande">Grande</option>
+        </select>
+        <br><br>
+        <input type="text" name="buscar" placeholder="Buscar...">
+    </form>
+
+    <h3>Resultados comerciales</h3>
+    <div>
+        <p>0 Encontradas</p>
+    </div>
+
+</body>
+</html>
