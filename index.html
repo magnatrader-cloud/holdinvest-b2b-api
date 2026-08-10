@@ -128,6 +128,7 @@
         async function buscarEmpresas() {
             const ciudad = document.getElementById('filtroCiudad').value;
             const tamano = document.getElementById('filtroTamano').value;
+            const tipo = document.getElementById('filtroTipo').value;
             const grid = document.getElementById('gridResultados');
             const contador = document.getElementById('contadorResultados');
 
@@ -136,7 +137,9 @@
             try {
                 let url = `${API_BASE_URL}/empresas/buscar?`;
                 if (ciudad) url += `ciudad=${encodeURIComponent(ciudad)}&`;
-                if (tamano) url += `tamano=${encodeURIComponent(tamano)}`;
+                if (tamano) url += `tamano=${encodeURIComponent(tamano)}&`;
+                if (tipo) url += `tipo=${encodeURIComponent(tipo)}`; // <-- AGREGAR ESTA LÍNEA
+            
 
                 const response = await fetch(url);
                 const resultado = await response.json();
