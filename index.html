@@ -154,13 +154,15 @@
             mensajeBox.innerText = 'Procesando afiliación en el ecosistema...';
 
             // Empaquetamos los datos capturando tu ID de casilla actual
+    
             const payload = {
-                razon_social: document.getElementById('razon_social').value,
-                identificador_fiscal: document.getElementById('identificador_fiscal').value,
+                razon_social: document.getElementById('razon_social').value.trim(),
+                identificador_fiscal: document.getElementById('identificador_fiscal').value.trim(),
                 tipo_empresa: document.getElementById('tipo_empresa').value,
                 tamano_empresa: document.getElementById('tamano_empresa').value,
-                id_ciudad: document.getElementById('id_ciudad').value 
+                id_ciudad: document.getElementById('id_ciudad').value.trim()
             };
+
 
             try {
                 // Ejecutamos la petición apuntando al endpoint de registro
