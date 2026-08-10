@@ -110,11 +110,11 @@ app.post('/api/empresas/registrar', async (req, res) => {
     
     const { rows } = await pool.query(queryText, values);
 
-    // 2. CONFIGURACIÓN DEL TRANSPORTE SMTP SEGÚN EXIGENCIA DE RENDER (PUERTO TLS/SSL 465)
+    // 2. CONFIGURACIÓN DEL TRANSPORTE SMTP (PUERTO TLS/SSL 465)
     const transporter = nodemailer.createTransport({
       host: '://gmail.com',
       port: 465,
-      secure: true, // Forzado en true para cifrar la conexión y evitar timeouts de red
+      secure: true, 
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
@@ -123,7 +123,7 @@ app.post('/api/empresas/registrar', async (req, res) => {
 
     // 3. ESTRUCTURA Y DISEÑO DEL CORREO DE ALERTA
     const mailOptions = {
-      from: `"BIDAccess Platform" <${process.env.EMAIL_USER}>`,
+      from: process.env.EMAIL_USER, // CORREGIDO: Se usa directamente la variable limpia sin parsear caracteres de texto extra
       to: process.env.EMAIL_RECEIVER, 
       subject: `🚨 Nueva Solicitud de Afiliación B2B: ${razon_social}`,
       html: `
