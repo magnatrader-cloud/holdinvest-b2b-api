@@ -1,15 +1,16 @@
 const express = require('express');
 const { Pool } = require('pg');
-const cors = require('cors'); // AGREGADO: Necesario para permitir que tu Frontend se comunique con la API
+const cors = require('cors'); 
+const nodemailer = require('nodemailer'); // Agregado para el sistema de alertas por correo
 require('dotenv').config();
 
 const app = express();
 
-// CONFIGURACIÓN DE CORS: Permite de forma segura el acceso desde cualquier origen (tu frontend)
+// CONFIGURACIÓN DE CORS
 app.use(cors());
 app.use(express.json());
 
-// Configuración de la conexión a PostgreSQL ajustada para Neon y las variables de Render
+// Configuración de la conexión a PostgreSQL (Neon y Render)
 const pool = new Pool({
   user: process.env.DB_USER,
   host: process.env.DB_HOST,
@@ -17,16 +18,15 @@ const pool = new Pool({
   password: process.env.DB_PASSWORD,
   port: parseInt(process.env.DB_PORT || '5432', 10),
   connectionTimeoutMillis: 5000,
-  // CONFIGURACIÓN SSL CRÍTICA: Resuelve el conflicto con la variable DB_SSL = true de Neon
   ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false
 });
 
 // Ruta Base de Verificación
 app.get('/api', (req, res) => {
-  res.json({ status: 'Online', message: 'Bienvenido a la API de Holdinvest B2B' });
+  res.json({ status: 'Online', message: 'Bienvenido a la API de BIDAccess B2B' });
 });
 
-// ENDPOINT DE BÚSQUEDA AVANZADA B2B
+// ENDPOINT DE BÚSQUEDA AVANZADA B2B (Se mantiene intacto tu código original)
 app.get('/api/empresas/buscar', async (req, res) => {
   try {
     const { tamano, region, estado, ciudad, tipo } = req.query;
@@ -89,7 +89,7 @@ app.get('/api/empresas/buscar', async (req, res) => {
   }
 });
 
-// ENDPOINT DE REGISTRO (POST) - CORREGIDO CON CONTROL DE LLAVES FORÁNEAS
+// ENDPOINT DE REGISTRO (POST) - INTEGRADO CON ALERTAS AUTOMÁTICAS POR CORREO
 app.post('/api/empresas/registrar', async (req, res) => {
   try {
     const { razon_social, identificador_fiscal, tipo_empresa, tamano_empresa, id_ciudad } = req.body;
@@ -98,6 +98,7 @@ app.post('/api/empresas/registrar', async (req, res) => {
       return res.status(400).json({ error: 'Razón Social e Identificador Fiscal son obligatorios' });
     }
 
+    // 1. Almacenar el registro en la base de datos de Neon
     const queryText = `
       INSERT INTO empresas (razon_social, identificador_fiscal, tipo_empresa, tamano_empresa, id_ciudad)
       VALUES ($1, $2, $3, $4, $5)
@@ -106,28 +107,81 @@ app.post('/api/empresas/registrar', async (req, res) => {
     const values = [razon_social, identificador_fiscal, tipo_empresa, tamano_empresa, id_ciudad];
     
     const { rows } = await pool.query(queryText, values);
-    res.status(201).json({ success: true, datos: rows[0] });
+
+    // 2. CONFIGURACIÓN DEL TRANSPORTE SMTP (Nodemailer)
+    const transporter = nodemailer.createTransport({
+      service: 'gmail', 
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    });
+
+    // 3. ESTRUCTURA Y DISEÑO DEL CORREO DE ALERTA (Formato HTML Limpio)
+    const mailOptions = {
+      from: `"BIDAccess Platform" <${process.env.EMAIL_USER}>`,
+      to: process.env.EMAIL_RECEIVER, 
+      subject: `🚨 Nueva Solicitud de Afiliación B2B: ${razon_social}`,
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 16px; padding: 24px; background-color: #ffffff;">
+          <h2 style="color: #1e3a8a; margin-top: 0; font-size: 20px;">💼 Nueva Solicitud de Afiliación</h2>
+          <p style="color: #4b5563; font-size: 14px;">Se ha recibido y guardado una nueva solicitud comercial en la plataforma. Detalles del registro:</p>
+          
+          <table style="width: 100%; border-collapse: collapse; margin-top: 16px; margin-bottom: 20px;">
+            <tr>
+              <td style="padding: 10px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; font-weight: bold; color: #6b7280; text-transform: uppercase; width: 35%;">Razón Social:</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid #f3f4f6; font-size: 14px; color: #111827; font-weight: 600;">${razon_social}</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; font-weight: bold; color: #6b7280; text-transform: uppercase;">ID Fiscal (RIF/NIT):</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid #f3f4f6; font-size: 14px; color: #111827; font-family: monospace;">${identificador_fiscal}</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; font-weight: bold; color: #6b7280; text-transform: uppercase;">Tipo de Empresa:</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid #f3f4f6; font-size: 14px; color: #111827;">${tipo_empresa || 'Comercial'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; font-weight: bold; color: #6b7280; text-transform: uppercase;">Tamaño:</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid #f3f4f6; font-size: 14px; color: #111827;">${tamano_empresa || 'No especificado'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; font-weight: bold; color: #6b7280; text-transform: uppercase;">ID Ciudad Piloto:</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid #f3f4f6; font-size: 14px; color: #111827;">${id_ciudad}</td>
+            </tr>
+          </table>
+          
+          <div style="padding: 12px; background-color: #f0fdf4; border-radius: 8px; text-align: center;">
+            <span style="color: #166534; font-size: 13px; font-weight: bold;">Estatus: Registro persistido en la base de datos Neon</span>
+          </div>
+        </div>
+      `
+    };
+
+    // 4. Despachar el correo electrónico en segundo plano
+    transporter.sendMail(mailOptions, (mailErr, info) => {
+      if (mailErr) {
+        console.error('Error al enviar el correo de notificación:', mailErr);
+      } else {
+        console.log('Notificación por correo enviada exitosamente:', info.response);
+      }
+    });
+
+    // 5. Responder de forma exitosa al cliente web
+    res.status(201).json({ success: true, datos: rows });
 
   } catch (error) {
     console.error('Error al registrar empresa:', error);
-    
-    // Error 23505: Clave duplicada (El RIF ya existe en Neon)
     if (error.code === '23505') { 
       return res.status(400).json({ error: 'El identificador fiscal ya se encuentra registrado' });
     }
-    
-    // Error 23503: Violación de llave foránea (El id_ciudad no existe en la tabla ciudades)
     if (error.code === '23503') {
       return res.status(400).json({ error: 'El ID de Ciudad Piloto ingresado no existe en el sistema' });
     }
-    
-    // Error genérico del servidor
     res.status(500).json({ error: 'Error al procesar el registro en la base de datos' });
   }
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Servidor B2B Holdinvest corriendo en puerto ${PORT}`);
+  console.log(`Servidor BIDAccess corriendo en puerto ${PORT}`);
 });
-
