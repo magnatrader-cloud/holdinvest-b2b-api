@@ -1,17 +1,11 @@
 const express = require('express');
 const { Pool } = require('pg');
 const cors = require('cors'); 
-const nodemailer = require('nodemailer'); // Agregado para el sistema de alertas por correo
+const nodemailer = require('nodemailer'); 
 require('dotenv').config();
-const ciudadIdEntero = parseInt(id_ciudad || '1', 10);
+
 const app = express();
-const queryText = `
-      INSERT INTO empresas (razon_social, identificador_fiscal, tipo_empresa, tamano_empresa, id_ciudad)
-      VALUES ($1, $2, $3, $4, $5)
-      RETURNING *
-    `;
-    // Enviamos el valor ya transformado a número entero en la posición 5
-    const values = [razon_social, identificador_fiscal, tipo_empresa, tamano_empresa, ciudadIdEntero];
+
 // CONFIGURACIÓN DE CORS
 app.use(cors());
 app.use(express.json());
@@ -32,7 +26,7 @@ app.get('/api', (req, res) => {
   res.json({ status: 'Online', message: 'Bienvenido a la API de BIDAccess B2B' });
 });
 
-// ENDPOINT DE BÚSQUEDA AVANZADA B2B (Se mantiene intacto tu código original)
+// ENDPOINT DE BÚSQUEDA AVANZADA B2B (Se mantiene tu formato original)
 app.get('/api/empresas/buscar', async (req, res) => {
   try {
     const { tamano, region, estado, ciudad, tipo } = req.query;
@@ -104,13 +98,16 @@ app.post('/api/empresas/registrar', async (req, res) => {
       return res.status(400).json({ error: 'Razón Social e Identificador Fiscal son obligatorios' });
     }
 
+    // UBICACIÓN CORRECTA: La conversión se ejecuta aquí adentro, donde id_ciudad sí está definido
+    const ciudadIdEntero = parseInt(id_ciudad || '1', 10);
+
     // 1. Almacenar el registro en la base de datos de Neon
     const queryText = `
       INSERT INTO empresas (razon_social, identificador_fiscal, tipo_empresa, tamano_empresa, id_ciudad)
       VALUES ($1, $2, $3, $4, $5)
       RETURNING *
     `;
-    const values = [razon_social, identificador_fiscal, tipo_empresa, tamano_empresa, id_ciudad];
+    const values = [razon_social, identificador_fiscal, tipo_empresa, tamano_empresa, ciudadIdEntero];
     
     const { rows } = await pool.query(queryText, values);
 
@@ -152,7 +149,7 @@ app.post('/api/empresas/registrar', async (req, res) => {
             </tr>
             <tr>
               <td style="padding: 10px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; font-weight: bold; color: #6b7280; text-transform: uppercase;">ID Ciudad Piloto:</td>
-              <td style="padding: 10px 0; border-bottom: 1px solid #f3f4f6; font-size: 14px; color: #111827;">${id_ciudad}</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid #f3f4f6; font-size: 14px; color: #111827;">${ciudadIdEntero}</td>
             </tr>
           </table>
           
@@ -186,6 +183,12 @@ app.post('/api/empresas/registrar', async (req, res) => {
     res.status(500).json({ error: 'Error al procesar el registro en la base de datos' });
   }
 });
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Servidor BIDAccess corriendo en puerto ${PORT}`);
+});
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
