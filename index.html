@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Holdinvest B2B - Panel de Control</title>
-    <link href="https://cloudflare.com" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
 </head>
 <body class="bg-gray-50 font-sans text-gray-800">
 
@@ -38,6 +38,9 @@
                             <option value="Comercio">Comercio</option>
                         </select>
                     </div>
+
+
+                    
                     <div>
                         <label class="block text-xs font-medium text-gray-500 uppercase mb-1">Tamaño</label>
                         <select id="tamano_empresa" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 text-sm bg-white">
@@ -49,7 +52,7 @@
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-gray-500 uppercase mb-1">Ciudad</label>
-                    <select id="id_ciudad" required class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 text-sm bg-white">
+                     <select id="id_ciudad" required class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 text-sm bg-white">
                         <option value="">Seleccione una ciudad...</option>
                         <option value="1">Caracas</option>
                         <option value="2">Chacao</option>
@@ -81,12 +84,10 @@
             <div id="mensajeRegistro" class="mt-3 text-xs hidden text-center font-medium p-2 rounded-lg"></div>
         </section>
 
-        <!-- SECCIÓN DE BÚSQUEDA Y RESULTADOS POR CIUDAD -->
         <section class="md:col-span-2 space-y-6">
             <div class="bg-white p-4 rounded-2xl shadow border border-gray-100 flex flex-wrap gap-4 items-center justify-between">
                 <div class="flex flex-wrap gap-3 items-center flex-1">
-                    <!-- Campo corregido exclusivamente para Ciudad -->
-                    <input type="text" id="filtroCiudad" placeholder="Filtrar por Ciudad..." class="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 text-sm min-w-[150px]">
+                    <input type="text" id="filtroRegion" placeholder="Filtrar por Ciudad..." class="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 text-sm min-w-[150px]">
                     <select id="filtroTamano" class="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 text-sm bg-white">
                         <option value="">Todos los tamaños</option>
                         <option value="Pequeña">Pequeña</option>
@@ -108,17 +109,15 @@
             </div>
         </section>
     </main>
+
     <script>
-        // Dirección asignada a tu Web Service de Backend (-1)
-        const API_BASE_URL = 'https://onrender.com';
+        const API_BASE_URL = 'https://holdinvest-b2b-api-1.onrender.com/api';
 
-        document.addEventListener('DOMContentLoaded', () => {
-            buscarEmpresas();
-        });
-
-        // LÓGICA DE BÚSQUEDA CORREGIDA PARA CIUDAD
+        // =========================================================
+        // 🔍 LÓGICA DE BÚSQUEDA DE EMPRESAS (Se mantiene tu formato original)
+        // =========================================================
         async function buscarEmpresas() {
-            const ciudad = document.getElementById('filtroCiudad').value;
+            const region = document.getElementById('filtroRegion').value;
             const tamano = document.getElementById('filtroTamano').value;
             const grid = document.getElementById('gridResultados');
             const contador = document.getElementById('contadorResultados');
@@ -127,7 +126,7 @@
 
             try {
                 let url = `${API_BASE_URL}/empresas/buscar?`;
-                if (ciudad) url += `ciudad=${encodeURIComponent(ciudad)}&`;
+                if (region) url += `region=${encodeURIComponent(region)}&`;
                 if (tamano) url += `tamano=${encodeURIComponent(tamano)}`;
 
                 const response = await fetch(url);
@@ -147,76 +146,83 @@
                     card.innerHTML = `
                         <div>
                             <div class="flex justify-between items-start mb-2">
-                                <span class="bg-blue-50 text-blue-700 font-semibold text-xs px-2.5 py-1 rounded-md mb-2 inline-block">${empresa.tipo_empresa}</span>
-                                <span class="text-xs text-gray-400 font-medium">${empresa.tamano_empresa}</span>
+                                <span class="bg-blue-50 text-blue-700 font-semibold text-xs px-2.5 py-1 rounded-md">${empresa.tipo_empresa || 'Comercial'}</span>
+                                <span class="text-gray-400 text-xs font-mono font-medium">${empresa.identificador_fiscal}</span>
                             </div>
                             <h4 class="font-bold text-gray-900 text-base mb-1">${empresa.razon_social}</h4>
-                            <p class="text-xs text-gray-500 mb-3">RIF/NIT: ${empresa.identificador_fiscal}</p>
-                            <div class="space-y-1 text-xs text-gray-600 border-t pt-3 border-gray-50">
-                                <p class="flex items-center gap-1">📍 <span class="font-medium">${empresa.nombre_ciudad}</span>, ${empresa.nombre_estado}</p>
-                                <p class="flex items-center gap-1">🏢 Gremio: <span class="font-medium text-blue-600">${empresa.gremio_afiliado}</span></p>
-                            </div>
+                            <p class="text-gray-500 text-xs">📍 ${empresa.nombre_ciudad || 'Ciudad no especificada'}</p>
                         </div>
                     `;
                     grid.appendChild(card);
                 });
 
             } catch (error) {
-                console.error('Error al buscar empresas:', error);
-                grid.innerHTML = '<div class="col-span-full text-center text-red-500 bg-red-50 p-6 rounded-xl border border-red-200">Error al conectar con la base de datos comercial.</div>';
+                console.error('Error al buscar:', error);
+                grid.innerHTML = '<div class="col-span-full text-center text-red-500 py-8">Error al cargar datos.</div>';
             }
         }
 
-        // LÓGICA DE REGISTRO
+        // =========================================================
+        // ➕ NUEVO: PROCESAMIENTO SEGURO DEL FORMULARIO DE REGISTRO
+        // =========================================================
         document.getElementById('formRegistrar').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const msgDiv = document.getElementById('mensajeRegistro');
-            
+            e.preventDefault(); // Detiene de golpe el refresco por defecto que rompe tu JSON
+
+            const mensajeBox = document.getElementById('mensajeRegistro');
+            mensajeBox.classList.remove('hidden', 'bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800');
+            mensajeBox.classList.add('bg-blue-100', 'text-blue-800', 'block');
+            mensajeBox.innerText = 'Procesando afiliación en el ecosistema...';
+
+            // Empaquetamos los datos capturando tu ID de casilla actual
+    
             const payload = {
-                razon_social: document.getElementById('razon_social').value,
-                identificador_fiscal: document.getElementById('identificador_fiscal').value,
+                razon_social: document.getElementById('razon_social').value.trim(),
+                identificador_fiscal: document.getElementById('identificador_fiscal').value.trim(),
                 tipo_empresa: document.getElementById('tipo_empresa').value,
                 tamano_empresa: document.getElementById('tamano_empresa').value,
-                id_ciudad: document.getElementById('id_ciudad').value
+                id_ciudad: document.getElementById('id_ciudad').value.trim()
             };
 
-            msgDiv.className = "mt-3 text-xs text-center font-medium p-2 rounded-lg bg-gray-100 text-gray-600 block";
-            msgDiv.innerText = "Procesando afiliación comercial...";
 
             try {
+                // Ejecutamos la petición apuntando al endpoint de registro
                 const response = await fetch(`${API_BASE_URL}/empresas/registrar`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
 
-                const data = await response.json();
+                const resultado = await response.json();
+                mensajeBox.classList.remove('bg-blue-100', 'text-blue-800');
 
                 if (!response.ok) {
-                    throw new Error(data.error || 'Error inesperado en el registro');
+                    throw new Error(resultado.error || 'Error controlado por el servidor backend.');
                 }
 
-                msgDiv.className = "mt-3 text-xs text-center font-medium p-2 rounded-lg bg-green-50 text-green-700 block";
-                msgDiv.innerText = "¡Solicitud registrada con éxito! Correo de notificación despachado.";
-                
-                document.getElementById('formRegistrar').reset();
-                buscarEmpresas();
-
-            } catch (err) {
-                msgDiv.className = "mt-3 text-xs text-center font-medium p-2 rounded-lg bg-red-50 text-red-700 block";
-                msgDiv.innerText = err.message;
+                            // Registro exitoso, pintamos en verde usando tus clases predefinidas
+            mensajeBox.classList.add('bg-green-100', 'text-green-800');
+            mensajeBox.innerText = '¡Empresa registrada con éxito! Correo de alerta despachado.';
+            document.getElementById('formRegistrar').reset(); // Limpia los campos del formulario
+            
+            // Refresca automáticamente tu lista comercial del lado derecho de forma segura
+            try {
+                await buscarEmpresas();
+            } catch (e) {
+                console.error("Error al refrescar catálogo:", e);
             }
+
+        } catch (error) {
+            console.error('Error capturado en frontend:', error);
+            
+            // Corrección de clases controlada para pintar el recuadro rosa con el error real de la API
+            mensajeBox.classList.remove('bg-blue-100', 'text-blue-800');
+            mensajeBox.classList.add('bg-red-100', 'text-red-800');
+            mensajeBox.innerText = error.message;
+        }
+
         });
 
         document.getElementById('btnBuscar').addEventListener('click', buscarEmpresas);
-        document.getElementById('filtroCiudad').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') buscarEmpresas();
-        });
-        document.getElementById('filtroTamano').addEventListener('change', buscarEmpresas);
-    </script>
-</body>
-</html>
-
     </script>
 
 </body>
