@@ -145,9 +145,63 @@
         // =========================================================
         // 🔍 LÓGICA DE BÚSQUEDA DE EMPRESAS (Se mantiene tu formato original)
         // =========================================================
-        //async function buscarEmpresas() 
                document.addEventListener('DOMContentLoaded', async () => {
-            // Carga inicial del ecosistema comercial
+            // Mantiene la carga automática de empresas en la tabla
+            buscarEmpresas();
+
+            const selectEstado = document.getElementById('id_estado');
+            const selectCiudad = document.getElementById('id_ciudad');
+
+            // 1. Cargar Estados automáticamente al abrir la página desde tu backend (-1)
+            try {
+                const response = await fetch(`${API_BASE_URL}/estados`);
+                const estados = await response.json();
+                
+                selectEstado.innerHTML = '<option value="">Seleccione un estado...</option>';
+                estados.forEach(est => {
+                    const option = document.createElement('option');
+                    option.value = est.nombre_estado; 
+                    option.textContent = est.nombre_estado;
+                    selectEstado.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error al conectar con la tabla de estados:', error);
+                selectEstado.innerHTML = '<option value="">Error al cargar estados</option>';
+            }
+
+            // 2. Escuchar el cambio de Estado para limpiar y rellenar las Ciudades vinculadas
+            selectEstado.addEventListener('change', async () => {
+                const estadoSeleccionado = selectEstado.value;
+                
+                if (!estadoSeleccionado) {
+                    selectCiudad.innerHTML = '<option value="">Seleccione primero un estado...</option>';
+                    selectCiudad.disabled = true;
+                    return;
+                }
+
+                selectCiudad.innerHTML = '<option value="">Cargando ciudades...</option>';
+                selectCiudad.disabled = false;
+
+                try {
+                    const response = await fetch(`${API_BASE_URL}/ciudades`);
+                    const ciudades = await response.json();
+                    
+                    selectCiudad.innerHTML = '<option value="">Seleccione una ciudad...</option>';
+                    
+                    // Inyectamos las ciudades parametrizadas en tu base de datos Neon
+                    ciudades.forEach(c => {
+                        const option = document.createElement('option');
+                        option.value = c.id_ciudad; // Mantiene el ID entero obligatorio para guardar en base de datos
+                        option.textContent = c.nombre_ciudad;
+                        selectCiudad.appendChild(option);
+                    });
+                } catch (error) {
+                    console.error('Error al conectar con la tabla de ciudades:', error);
+                    selectCiudad.innerHTML = '<option value="">Error al cargar ciudades</option>';
+                }
+            });
+        });
+
             buscarEmpresas();
 
             const selectEstado = document.getElementById('id_estado');
