@@ -19,7 +19,7 @@
         
         <section class="bg-white p-6 rounded-2xl shadow border border-gray-100 h-fit">
             <h2 class="text-lg font-bold text-gray-900 mb-4">➕ Registrar Nueva Empresa</h2>
-                        <form id="formRegistrar" class="space-y-4">
+            <form id="formRegistrar" class="space-y-4">
                 <div>
                     <label class="block text-xs font-medium text-gray-500 uppercase mb-1">Razón Social</label>
                     <input type="text" id="razon_social" required placeholder="Ej. Inversiones Alfa C.A." class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 text-sm">
@@ -38,6 +38,9 @@
                             <option value="Comercio">Comercio</option>
                         </select>
                     </div>
+
+
+                    
                     <div>
                         <label class="block text-xs font-medium text-gray-500 uppercase mb-1">Tamaño</label>
                         <select id="tamano_empresa" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 text-sm bg-white">
@@ -48,15 +51,26 @@
                     </div>
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-gray-500 uppercase mb-1">Estado</label>
-                    <select id="id_estado" required class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 text-sm bg-white">
-                        <option value="">Cargando estados...</option>
-                    </select>
-                </div>
-                <div>
                     <label class="block text-xs font-medium text-gray-500 uppercase mb-1">Ciudad</label>
-                    <select id="id_ciudad" required disabled class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 text-sm bg-white disabled:bg-gray-100 disabled:text-gray-400">
-                        <option value="">Seleccione primero un estado...</option>
+                     <select id="id_ciudad" required class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 text-sm bg-white">
+                        <option value="">Seleccione una ciudad...</option>
+                        <option value="1">Caracas</option>
+                        <option value="2">Chacao</option>
+                        <option value="3">Baruta</option>
+                        <option value="4">Los Teques</option>
+                        <option value="9">Maracay</option>
+                        <option value="12">Valencia</option>
+                        <option value="16">Maracaibo</option>
+                        <option value="21">Punto Fijo</option>
+                        <option value="22">Barquisimeto</option>
+                        <option value="26">Mérida</option>
+                        <option value="28">San Cristóbal</option>
+                        <option value="35">Acarigua</option>
+                        <option value="38">Puerto La Cruz</option>
+                        <option value="39">Lechería</option>
+                        <option value="41">Maturín</option>
+                        <option value="44">Ciudad Guayana (Puerto Ordaz)</option>
+                        <option value="48">Porlamar</option>
                     </select>
                 </div>
                 <div>
@@ -67,7 +81,6 @@
                     Solicitar Afiliación
                 </button>
             </form>
-
             <div id="mensajeRegistro" class="mt-3 text-xs hidden text-center font-medium p-2 rounded-lg"></div>
         </section>
 
@@ -133,175 +146,7 @@
         // =========================================================
         // 🔍 LÓGICA DE BÚSQUEDA DE EMPRESAS (Se mantiene tu formato original)
         // =========================================================
-                  document.addEventListener('DOMContentLoaded', async () => {
-            // Mantiene la carga automática de empresas comerciales en la tabla
-            buscarEmpresas();
-
-            const selectEstado = document.getElementById('id_estado');
-            const selectCiudad = document.getElementById('id_ciudad');
-
-            // 1. Consultar Estados automáticamente al cargar el sistema
-            try {
-                const response = await fetch(`${API_BASE_URL}/estados`);
-                const estados = await response.json();
-                
-                selectEstado.innerHTML = '<option value="">Seleccione un estado...</option>';
-                estados.forEach(est => {
-                    const option = document.createElement('option');
-                    option.value = est.nombre_estado; 
-                    option.textContent = est.nombre_estado;
-                    selectEstado.appendChild(option);
-                });
-            } catch (error) {
-                console.error('Error al conectar con la tabla de estados:', error);
-                selectEstado.innerHTML = '<option value="">Error al cargar estados</option>';
-            }
-
-            // 2. Escuchar cambios en el Estado para liberar e inyectar las Ciudades de Neon
-            selectEstado.addEventListener('change', async () => {
-                const estadoSeleccionado = selectEstado.value;
-                
-                if (!estadoSeleccionado) {
-                    selectCiudad.innerHTML = '<option value="">Seleccione primero un estado...</option>';
-                    selectCiudad.disabled = true;
-                    return;
-                }
-
-                selectCiudad.innerHTML = '<option value="">Cargando ciudades...</option>';
-                selectCiudad.disabled = false;
-
-                try {
-                    const response = await fetch(`${API_BASE_URL}/ciudades`);
-                    const ciudades = await response.json();
-                    
-                    selectCiudad.innerHTML = '<option value="">Seleccione una ciudad...</option>';
-                    
-                    ciudades.forEach(c => {
-                        const option = document.createElement('option');
-                        option.value = c.id_ciudad; // Envía el ID numérico que exige tu backend
-                        option.textContent = c.nombre_ciudad;
-                        selectCiudad.appendChild(option);
-                    });
-                } catch (error) {
-                    console.error('Error al conectar con la tabla de ciudades:', error);
-                    selectCiudad.innerHTML = '<option value="">Error al cargar ciudades</option>';
-                }
-            });
-        });
-
-
-            buscarEmpresas();
-
-            const selectEstado = document.getElementById('id_estado');
-            const selectCiudad = document.getElementById('id_ciudad');
-
-            // 1. Carga automática de Estados desde el backend
-            try {
-                const response = await fetch(`${API_BASE_URL}/estados`);
-                const estados = await response.json();
-                
-                selectEstado.innerHTML = '<option value="">Seleccione un estado...</option>';
-                estados.forEach(est => {
-                    const option = document.createElement('option');
-                    option.value = est.nombre_estado; 
-                    option.textContent = est.nombre_estado;
-                    selectEstado.appendChild(option);
-                });
-            } catch (error) {
-                console.error('Error al conectar con la tabla de estados:', error);
-                selectEstado.innerHTML = '<option value="">Error al cargar estados</option>';
-            }
-
-            // 2. Escucha el cambio de Estado para filtrar las Ciudades correspondientes
-            selectEstado.addEventListener('change', async () => {
-                const estadoSeleccionado = selectEstado.value;
-                
-                if (!estadoSeleccionado) {
-                    selectCiudad.innerHTML = '<option value="">Seleccione primero un estado...</option>';
-                    selectCiudad.disabled = true;
-                    return;
-                }
-
-                selectCiudad.innerHTML = '<option value="">Cargando ciudades...</option>';
-                selectCiudad.disabled = false;
-
-                try {
-                    const response = await fetch(`${API_BASE_URL}/ciudades`);
-                    const ciudades = await response.json();
-                    
-                    selectCiudad.innerHTML = '<option value="">Seleccione una ciudad...</option>';
-                    
-                    ciudades.forEach(c => {
-                        const option = document.createElement('option');
-                        option.value = c.id_ciudad; // Conserva el ID numérico obligatorio para guardar en base de datos
-                        option.textContent = c.nombre_ciudad;
-                        selectCiudad.appendChild(option);
-                    });
-                } catch (error) {
-                    console.error('Error al conectar con la tabla de ciudades:', error);
-                    selectCiudad.innerHTML = '<option value="">Error al cargar ciudades</option>';
-                }
-            });
-        });
-
-    buscarEmpresas();
-
-    const selectEstado = document.getElementById('id_estado');
-    const selectCiudad = document.getElementById('id_ciudad');
-
-    // 1. Cargar Estados desde el endpoint 2 de tu server.js
-    try {
-        const response = await fetch(`${API_BASE_URL}/estados`);
-        const estados = await response.json();
-        
-        selectEstado.innerHTML = '<option value="">Seleccione un estado...</option>';
-        estados.forEach(est => {
-            const option = document.createElement('option');
-            // Almacenamos el nombre para que sea fácil la lectura visual
-            option.value = est.nombre_estado; 
-            option.textContent = est.nombre_estado;
-            selectEstado.appendChild(option);
-        });
-    } catch (error) {
-        console.error('Error al cargar estados:', error);
-        selectEstado.innerHTML = '<option value="">Error al cargar estados</option>';
-    }
-
-    // 2. Escuchar el cambio de Estado para activar e inyectar las Ciudades correspondientes
-    selectEstado.addEventListener('change', async () => {
-        const estadoSeleccionado = selectEstado.value;
-        
-        if (!estadoSeleccionado) {
-            selectCiudad.innerHTML = '<option value="">Seleccione primero un estado...</option>';
-            selectCiudad.disabled = true;
-            return;
-        }
-
-        selectCiudad.innerHTML = '<option value="">Cargando ciudades...</option>';
-        selectCiudad.disabled = false;
-
-        try {
-            // Consultamos tu endpoint 3 de server.js
-            const response = await fetch(`${API_BASE_URL}/ciudades`);
-            const ciudades = await response.json();
-            
-            selectCiudad.innerHTML = '<option value="">Seleccione una ciudad...</option>';
-            
-            // Renderizamos solo las ciudades que coincidan o las mapeamos desde la base de datos
-            ciudades.forEach(c => {
-                const option = document.createElement('option');
-                option.value = c.id_ciudad; // Mantiene el ID numérico obligatorio para Neon
-                option.textContent = c.nombre_ciudad;
-                selectCiudad.appendChild(option);
-            });
-            
-        } catch (error) {
-            console.error('Error al filtrar ciudades:', error);
-            selectCiudad.innerHTML = '<option value="">Error al conectar ciudades</option>';
-        }
-    });
-});
-{
+        async function buscarEmpresas() {
             const ciudad = document.getElementById('filtroCiudad').value;
             const tamano = document.getElementById('filtroTamano').value;
             const tipo = document.getElementById('filtroTipo').value;
@@ -413,105 +258,8 @@
         document.getElementById('btnBuscar').addEventListener('click', buscarEmpresas);
         document.getElementById('filtroTamano').addEventListener('change', buscarEmpresas);
         document.getElementById('filtroTipo').addEventListener('change', buscarEmpresas); 
-                // Código de conexión automática para estados y ciudades con Neon
-        document.addEventListener('DOMContentLoaded', async () => {
-            const selectEstado = document.getElementById('id_estado');
-            const selectCiudad = document.getElementById('id_ciudad');
-            if (!selectEstado || !selectCiudad) return;
-
-            try {
-                const response = await fetch(`${API_BASE_URL}/estados`);
-                const estados = await response.json();
-                selectEstado.innerHTML = '<option value="">Seleccione un estado...</option>';
-                estados.forEach(est => {
-                    const option = document.createElement('option');
-                    option.value = est.nombre_estado; 
-                    option.textContent = est.nombre_estado;
-                    selectEstado.appendChild(option);
-                });
-            } catch (error) {
-                console.error('Error al conectar con Neon:', error);
-                selectEstado.innerHTML = '<option value="">Error al cargar estados</option>';
-            }
-
-            selectEstado.addEventListener('change', async () => {
-                const estadoSeleccionado = selectEstado.value;
-                if (!estadoSeleccionado) {
-                    selectCiudad.innerHTML = '<option value="">Seleccione primero un estado...</option>';
-                    selectCiudad.disabled = true;
-                    return;
-                }
-                selectCiudad.innerHTML = '<option value="">Cargando ciudades...</option>';
-                selectCiudad.disabled = false;
-                try {
-                    const response = await fetch(`${API_BASE_URL}/ciudades`);
-                    const ciudades = await response.json();
-                    selectCiudad.innerHTML = '<option value="">Seleccione una ciudad...</option>';
-                    ciudades.forEach(c => {
-                        const option = document.createElement('option');
-                        option.value = c.id_ciudad; 
-                        option.textContent = c.nombre_ciudad;
-                        selectCiudad.appendChild(option);
-                    });
-                } catch (error) {
-                    console.error('Error:', error);
-                }
-            });
-        });
-
 
     </script>
-    <!-- CÓDIGO CORRECTO PARA CONECTAR EL SELECTOR A NEON -->
-    <script>
-        async function conectarEstadosNeon() {
-            // Buscamos el elemento select que actualmente dice "Cargando estados..."
-            const selectEstado = document.querySelector('select[disabled]') || document.getElementById('selectEstado');
-            
-            if (!selectEstado) return;
-
-            try {
-                // Hacemos la consulta de forma segura con una función async dedicada
-                const respuesta = await fetch('/api/estados');
-                
-                if (!respuesta.ok) {
-                    throw new Error(`Error en el servidor: ${respuesta.status}`);
-                }
-
-                const estados = await respuesta.json();
-                
-                // Limpiamos el texto provisional y activamos el selector
-                selectEstado.innerHTML = '<option value="">Seleccione un estado...</option>';
-                selectEstado.disabled = false;
-                selectEstado.style.backgroundColor = "#ffffff";
-                selectEstado.style.color = "#000000";
-
-                // Insertamos automáticamente los estados de tu base de datos Neon
-                estados.forEach(estado => {
-                    const option = document.createElement('option');
-                    option.value = estado.id || estado.nombre;
-                    option.textContent = estado.nombre;
-                    selectEstado.appendChild(option);
-                });
-
-            } catch (error) {
-                console.error("Error crítico al desplegar estados de Neon:", error);
-                // Si la base de datos falla, se lo notificamos al usuario elegantemente
-                selectEstado.innerHTML = '<option value="">Error al cargar base de datos</option>';
-                selectEstado.style.backgroundColor = "#fef2f2";
-                selectEstado.style.color = "#b91c1c";
-                selectEstado.style.borderColor = "#fca5a5";
-            }
-        }
-
-        // Ejecutamos la carga en cuanto la página esté lista en el navegador
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', conectarEstadosNeon);
-        } else {
-            conectarEstadosNeon();
-        }
-    </script>
-</body>
-</html>
 
 </body>
 </html>
