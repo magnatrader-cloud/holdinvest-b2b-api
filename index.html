@@ -461,6 +461,57 @@
 
 
     </script>
+    <!-- CÓDIGO CORRECTO PARA CONECTAR EL SELECTOR A NEON -->
+    <script>
+        async function conectarEstadosNeon() {
+            // Buscamos el elemento select que actualmente dice "Cargando estados..."
+            const selectEstado = document.querySelector('select[disabled]') || document.getElementById('selectEstado');
+            
+            if (!selectEstado) return;
+
+            try {
+                // Hacemos la consulta de forma segura con una función async dedicada
+                const respuesta = await fetch('/api/estados');
+                
+                if (!respuesta.ok) {
+                    throw new Error(`Error en el servidor: ${respuesta.status}`);
+                }
+
+                const estados = await respuesta.json();
+                
+                // Limpiamos el texto provisional y activamos el selector
+                selectEstado.innerHTML = '<option value="">Seleccione un estado...</option>';
+                selectEstado.disabled = false;
+                selectEstado.style.backgroundColor = "#ffffff";
+                selectEstado.style.color = "#000000";
+
+                // Insertamos automáticamente los estados de tu base de datos Neon
+                estados.forEach(estado => {
+                    const option = document.createElement('option');
+                    option.value = estado.id || estado.nombre;
+                    option.textContent = estado.nombre;
+                    selectEstado.appendChild(option);
+                });
+
+            } catch (error) {
+                console.error("Error crítico al desplegar estados de Neon:", error);
+                // Si la base de datos falla, se lo notificamos al usuario elegantemente
+                selectEstado.innerHTML = '<option value="">Error al cargar base de datos</option>';
+                selectEstado.style.backgroundColor = "#fef2f2";
+                selectEstado.style.color = "#b91c1c";
+                selectEstado.style.borderColor = "#fca5a5";
+            }
+        }
+
+        // Ejecutamos la carga en cuanto la página esté lista en el navegador
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', conectarEstadosNeon);
+        } else {
+            conectarEstadosNeon();
+        }
+    </script>
+</body>
+</html>
 
 </body>
 </html>
