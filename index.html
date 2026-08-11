@@ -133,14 +133,14 @@
         // =========================================================
         // 🔍 LÓGICA DE BÚSQUEDA DE EMPRESAS (Se mantiene tu formato original)
         // =========================================================
-               document.addEventListener('DOMContentLoaded', async () => {
-            // Mantiene la carga automática de empresas en la tabla
+                  document.addEventListener('DOMContentLoaded', async () => {
+            // Mantiene la carga automática de empresas comerciales en la tabla
             buscarEmpresas();
 
             const selectEstado = document.getElementById('id_estado');
             const selectCiudad = document.getElementById('id_ciudad');
 
-            // 1. Cargar Estados automáticamente al abrir la página desde tu backend (-1)
+            // 1. Consultar Estados automáticamente al cargar el sistema
             try {
                 const response = await fetch(`${API_BASE_URL}/estados`);
                 const estados = await response.json();
@@ -157,7 +157,7 @@
                 selectEstado.innerHTML = '<option value="">Error al cargar estados</option>';
             }
 
-            // 2. Escuchar el cambio de Estado para limpiar y rellenar las Ciudades vinculadas
+            // 2. Escuchar cambios en el Estado para liberar e inyectar las Ciudades de Neon
             selectEstado.addEventListener('change', async () => {
                 const estadoSeleccionado = selectEstado.value;
                 
@@ -176,10 +176,9 @@
                     
                     selectCiudad.innerHTML = '<option value="">Seleccione una ciudad...</option>';
                     
-                    // Inyectamos las ciudades parametrizadas en tu base de datos Neon
                     ciudades.forEach(c => {
                         const option = document.createElement('option');
-                        option.value = c.id_ciudad; // Mantiene el ID entero obligatorio para guardar en base de datos
+                        option.value = c.id_ciudad; // Envía el ID numérico que exige tu backend
                         option.textContent = c.nombre_ciudad;
                         selectCiudad.appendChild(option);
                     });
@@ -189,6 +188,7 @@
                 }
             });
         });
+
 
             buscarEmpresas();
 
